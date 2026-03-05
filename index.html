@@ -527,7 +527,7 @@
       border-bottom: 1px solid var(--border);
     }
 
-    .panel-head svg { width: 16px; height: 16px; stroke: var(--accent); flex-shrink: 0; }
+    .panel-head svg { width: 18px; height: 18px; stroke: var(--accent); flex-shrink: 0; }
 
     .panel-head-text {
       flex: 1;
@@ -786,7 +786,7 @@
         <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
       </svg>
       <div class="panel-head-text">
-        <div class="panel-head-title">Privacy Architecture</div>
+        <div class="panel-head-title">Privacy architecture</div>
         <div class="panel-head-sub">Technically enforced — not just a promise</div>
       </div>
       <span class="verified-badge">Verified</span>
@@ -840,7 +840,7 @@
         <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
       </svg>
       <div class="panel-head-text">
-        <div class="panel-head-title">Security Headers</div>
+        <div class="panel-head-title">Security headers</div>
         <div class="panel-head-sub">Enforced server-side on every response via vercel.json</div>
       </div>
     </div>
@@ -848,11 +848,11 @@
       <div class="headers-list">
         <div class="header-row">
           <span class="header-key">Content-Security-Policy</span>
-          <span class="header-val">connect-src 'none' — blocks all outbound network connections</span>
+          <span class="header-val">connect-src 'none' — no outbound connections</span>
         </div>
         <div class="header-row">
           <span class="header-key">Permissions-Policy</span>
-          <span class="header-val">camera=(), microphone=(), geolocation=() — hardware access denied</span>
+          <span class="header-val">camera=(), microphone=(), geolocation=() — denied</span>
         </div>
         <div class="header-row">
           <span class="header-key">Referrer-Policy</span>
@@ -888,7 +888,7 @@
         <path d="M9 6V4h6v2"/>
       </svg>
       <div class="panel-head-text">
-        <div class="panel-head-title">What Gets Stripped</div>
+        <div class="panel-head-title">What gets stripped</div>
         <div class="panel-head-sub">All metadata fields removed from the output file</div>
       </div>
     </div>
