@@ -9,7 +9,7 @@
   <!-- No external scripts. Fonts only — no JS from Google. -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,300;0,400;0,500;1,300&family=Unbounded:wght@400;700;900&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Unbounded:wght@400;600;700;900&display=swap" rel="stylesheet">
 
   <title>NoTrace — Private Metadata Remover</title>
 
@@ -36,8 +36,8 @@
       --amber:      #ffb347;
       --blue:       #5599ff;
       --radius:     10px;
-      --font-mono:  'DM Mono', monospace;
-      --font-display: 'Unbounded', sans-serif;
+      --mono:  'DM Mono', monospace;
+      --display: 'Unbounded', sans-serif;
     }
 
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -47,7 +47,7 @@
     body {
       background: var(--bg);
       color: var(--text);
-      font-family: var(--font-mono);
+      font-family: var(--mono);
       font-size: 13px;
       line-height: 1.6;
       min-height: 100vh;
@@ -104,7 +104,7 @@
     .logo-mark svg { width: 20px; height: 20px; }
 
     .logo-text {
-      font-family: var(--font-display);
+      font-family: var(--display);
       font-weight: 900;
       font-size: 22px;
       letter-spacing: -1px;
@@ -227,7 +227,7 @@
     .drop-icon-wrap svg { width: 30px; height: 30px; stroke: var(--accent); }
 
     .drop-title {
-      font-family: var(--font-display);
+      font-family: var(--display);
       font-weight: 700;
       font-size: 18px;
       letter-spacing: -0.5px;
@@ -281,7 +281,7 @@
     }
 
     .section-label {
-      font-family: var(--font-display);
+      font-family: var(--display);
       font-size: 10px;
       font-weight: 700;
       letter-spacing: 2.5px;
@@ -293,7 +293,7 @@
       background: none;
       border: 1px solid var(--border2);
       color: var(--text-mid);
-      font-family: var(--font-mono);
+      font-family: var(--mono);
       font-size: 10px;
       letter-spacing: 1px;
       padding: 4px 12px;
@@ -402,7 +402,7 @@
       background: none;
       border: 1px solid rgba(184,255,87,0.4);
       color: var(--accent);
-      font-family: var(--font-mono);
+      font-family: var(--mono);
       font-size: 10px;
       letter-spacing: 0.8px;
       padding: 5px 12px;
@@ -454,7 +454,7 @@
       background: var(--accent);
       color: #050505;
       border: none;
-      font-family: var(--font-display);
+      font-family: var(--display);
       font-weight: 700;
       font-size: 13px;
       letter-spacing: 0.3px;
@@ -481,7 +481,7 @@
       background: none;
       border: 1px solid var(--border2);
       color: var(--text);
-      font-family: var(--font-mono);
+      font-family: var(--mono);
       font-size: 12px;
       padding: 15px 22px;
       border-radius: 10px;
@@ -534,7 +534,7 @@
     }
 
     .panel-head-title {
-      font-family: var(--font-display);
+      font-family: var(--display);
       font-weight: 700;
       font-size: 12px;
       letter-spacing: 0.3px;
@@ -629,7 +629,7 @@
     .how-item:last-child { border-bottom: none; }
 
     .how-num {
-      font-family: var(--font-display);
+      font-family: var(--display);
       font-weight: 900;
       font-size: 20px;
       color: var(--accent);
@@ -653,7 +653,7 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
-      flex-wrap: gap;
+      flex-wrap: wrap;
       gap: 12px;
     }
 
@@ -1291,7 +1291,7 @@
       const saveBtn = document.createElement('button');
       saveBtn.className = 'btn-save';
       saveBtn.textContent = '↓ Save';
-      saveBtn.onclick = () => downloadOne(id);
+      saveBtn.onclick = () => downloadOne(id, id);
       actions.insertBefore(saveBtn, actions.querySelector('.card-status'));
     }
   }
@@ -1302,10 +1302,10 @@
   }
 
   // ── Download ───────────────────────────────────────────────────────
-  function downloadOne(id) {
+  function downloadOne(id, index) {
     const data = store.get(id);
     if (!data || !data.blob) return;
-    triggerDownload(data.blob, cleanFilename(data.name));
+    triggerDownload(data.blob, cleanFilename(data.name, index));
   }
 
   downloadAllBtn.addEventListener('click', async () => {
@@ -1313,13 +1313,14 @@
     if (cleaned.length === 0) return;
 
     if (cleaned.length === 1) {
-      downloadOne(cleaned[0][0]);
+      downloadOne(cleaned[0][0], 1);
       return;
     }
 
     // Sequential with small delay to avoid browser blocking
+    let i = 1;
     for (const [id] of cleaned) {
-      downloadOne(id);
+      downloadOne(id, i++);
       await sleep(200);
     }
   });
@@ -1336,13 +1337,12 @@
     setTimeout(() => URL.revokeObjectURL(url), 15000);
   }
 
-  function cleanFilename(original) {
+  function cleanFilename(original, index) {
     const dot = original.lastIndexOf('.');
-    const base = dot > 0 ? original.slice(0, dot) : original;
-    let ext  = dot > 0 ? original.slice(dot).toLowerCase() : '.jpg';
-    // HEIC → .jpg since we output JPEG
+    let ext = dot > 0 ? original.slice(dot).toLowerCase() : '.jpg';
     if (ext === '.heic' || ext === '.heif') ext = '.jpg';
-    return `${base}_clean${ext}`;
+    const num = String(index).padStart(3, '0');
+    return `image_${num}${ext}`;
   }
 
   // ── Remove / Clear ─────────────────────────────────────────────────
