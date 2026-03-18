@@ -11,10 +11,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Unbounded:wght@400;600;700;900&display=swap" rel="stylesheet">
 
-  <!-- heic2any: converts Apple HEIC photos locally in-browser.
-       Chrome and Firefox cannot decode HEIC natively — only Safari can.
-       Self-hosted — no external requests. No images leave your device. -->
-  <script src="/heic2any.min.js"></script>
+
 
   <title>NoTrace — Private Metadata Remover</title>
 
@@ -761,7 +758,7 @@
       <span class="format-chip">BMP</span>
       <span class="format-chip">AVIF</span>
     </div>
-    <p class="heic-note">🍎 Apple HEIC photos are converted locally — no server involved</p>
+    <p class="heic-note">🍎 HEIC supported in Safari. Chrome/Firefox: export as JPEG from iPhone Photos first</p>
 
     <input type="file" id="fileInput" accept="image/*" multiple style="position:fixed;top:-9999px;left:-9999px;opacity:0;pointer-events:none;">
   </div>
@@ -1201,8 +1198,13 @@
         markCardDone(id, data);
       } catch (err) {
         data.status = 'error';
-        setStatus(id, 'error', 'error');
-        markCardError(id);
+        if (err.message === 'HEIC_NOT_SUPPORTED') {
+          setStatus(id, 'error', 'convert to JPEG first');
+          markCardHeicError(id);
+        } else {
+          setStatus(id, 'error', 'error');
+          markCardError(id);
+        }
       }
       done++;
       progressFill.style.width = `${(done / pending.length) * 100}%`;
@@ -1232,26 +1234,14 @@
   // 2. Re-encode — canvas only copies pixel data, NEVER metadata
   // 3. Result Blob has zero EXIF/XMP/IPTC fields
   // ── Core: strip metadata via Canvas ───────────────────────────────
-  // HEIC note: Chrome and Firefox cannot decode HEIC natively — only Safari can.
-  // Apple has used HEIC as the default photo format since iPhone 7 (iOS 11, 2017).
-  // We use heic2any to convert HEIC → JPEG locally in-browser before canvas processing.
-  // heic2any runs entirely client-side via WebAssembly. No images leave your device.
   async function stripMetadata(file) {
     const isHeic = /\.(heic|heif)$/i.test(file.name) || file.type === 'image/heic' || file.type === 'image/heif';
 
-    // HEIC: convert to JPEG first via self-hosted heic2any (Chrome/Firefox can't decode HEIC)
+    // HEIC is not supported in Chrome or Firefox — only Safari can decode it natively.
+    // All browser-based HEIC libraries require Web Workers which conflict with our CSP.
+    // Ask the user to convert to JPEG first using their phone or a local tool.
     if (isHeic) {
-      if (typeof heic2any === 'undefined') {
-        throw new Error('heic2any not loaded');
-      }
-      try {
-        const converted = await heic2any({ blob: file, toType: 'image/jpeg', quality: 0.95 });
-        const jpegBlob = Array.isArray(converted) ? converted[0] : converted;
-        // Strip metadata from the converted JPEG via canvas
-        return stripViaCanvas(jpegBlob, 'image/jpeg', 0.95);
-      } catch (e) {
-        throw new Error('HEIC conversion failed: ' + e.message);
-      }
+      throw new Error('HEIC_NOT_SUPPORTED');
     }
 
     // All other formats
@@ -1327,6 +1317,21 @@
   function markCardError(id) {
     const card = document.getElementById(`card-${id}`);
     if (card) card.classList.add('state-error');
+  }
+
+  function markCardHeicError(id) {
+    const card = document.getElementById(`card-${id}`);
+    if (!card) return;
+    card.classList.add('state-error');
+    const tagsEl = document.getElementById(`tags-${id}`);
+    if (tagsEl) {
+      const sizeTag = tagsEl.querySelector('.tag-size');
+      const sizeText = sizeTag ? sizeTag.textContent : '';
+      tagsEl.innerHTML = `
+        <span class="tag tag-size">${sizeText}</span>
+        <span class="tag tag-exif">⚠ HEIC not supported in Chrome/Firefox — open Photos on iPhone, export as JPEG, then retry</span>
+      `;
+    }
   }
 
   // ── Download ───────────────────────────────────────────────────────

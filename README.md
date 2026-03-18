@@ -17,7 +17,7 @@ This is enforced at multiple levels:
 
 3. **Object URL lifecycle** — Every `URL.createObjectURL()` call is revoked within seconds. No image data lingers in memory longer than needed.
 
-4. **No third-party scripts** — Google Fonts CSS only (no JS). `heic2any` is self-hosted in the repo. Zero analytics, zero tracking pixels, zero telemetry.
+4. **No third-party scripts** — Google Fonts CSS only (no JS). Zero analytics, zero tracking pixels, zero telemetry.
 
 5. **Static hosting only** — There is no backend, no server-side code, no database.
 
@@ -34,6 +34,7 @@ This is enforced at multiple levels:
 | `Referrer-Policy` | `no-referrer` | No data leaked via referer |
 | `Strict-Transport-Security` | `max-age=63072000; includeSubDomains; preload` | HTTPS only, 2 years |
 | `Cross-Origin-Opener-Policy` | `same-origin` | Isolates browsing context |
+| `Cross-Origin-Embedder-Policy` | `require-corp` | Prevents cross-origin data leakage |
 | `X-Frame-Options` | `DENY` | Cannot be iframed / clickjacked |
 | `X-Content-Type-Options` | `nosniff` | MIME type cannot be overridden |
 
@@ -69,7 +70,7 @@ This is enforced at multiple levels:
 | TIFF   | ✅    | JPEG |
 | AVIF   | ✅    | JPEG |
 
-> **Note on HEIC:** Apple has used HEIC as the default photo format since iPhone 7 (iOS 11, 2017). Chrome and Firefox cannot decode HEIC natively — only Safari can. NoTrace uses `heic2any`, a self-hosted WebAssembly library, to convert HEIC → JPEG locally in the browser. No images are sent to any server.
+> **Note on HEIC:** Apple has used HEIC as the default photo format since iPhone 7 (iOS 11, 2017). Chrome and Firefox cannot decode HEIC natively — only Safari can decode HEIC without compromise. Chrome/Firefox users should export photos as JPEG from the iPhone Photos app before using NoTrace.
 
 ---
 
@@ -122,11 +123,10 @@ npx serve .
 
 ```
 notrace/
-├── index.html        # Entire app — single file
-├── heic2any.min.js   # Self-hosted HEIC converter (no external requests)
-├── vercel.json       # Deployment config + security headers
-├── README.md         # This file
-├── LICENSE           # MIT
+├── index.html      # Entire app — single file
+├── vercel.json     # Deployment config + security headers
+├── README.md       # This file
+├── LICENSE         # MIT
 └── .gitignore
 ```
 
