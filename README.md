@@ -33,7 +33,6 @@ This is enforced at multiple levels:
 | `Permissions-Policy` | `camera=(), microphone=(), geolocation=()` | Denies hardware access |
 | `Referrer-Policy` | `no-referrer` | No data leaked via referer |
 | `Strict-Transport-Security` | `max-age=63072000; includeSubDomains; preload` | HTTPS only, 2 years |
-| `Cross-Origin-Embedder-Policy` | `require-corp` | Prevents cross-origin data leakage |
 | `Cross-Origin-Opener-Policy` | `same-origin` | Isolates browsing context |
 | `X-Frame-Options` | `DENY` | Cannot be iframed / clickjacked |
 | `X-Content-Type-Options` | `nosniff` | MIME type cannot be overridden |
