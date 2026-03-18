@@ -1237,45 +1237,45 @@
   // We use heic2any to convert HEIC → JPEG locally in-browser before canvas processing.
   // heic2any runs entirely client-side via WebAssembly. No images leave your device.
   async function stripMetadata(file) {
-    let processFile = file;
     const isHeic = /\.(heic|heif)$/i.test(file.name) || file.type === 'image/heic' || file.type === 'image/heif';
 
-    if (isHeic && typeof heic2any !== 'undefined') {
+    // HEIC: convert to JPEG first via self-hosted heic2any (Chrome/Firefox can't decode HEIC)
+    if (isHeic) {
+      if (typeof heic2any === 'undefined') {
+        throw new Error('heic2any not loaded');
+      }
       try {
         const converted = await heic2any({ blob: file, toType: 'image/jpeg', quality: 0.95 });
-        processFile = Array.isArray(converted) ? converted[0] : converted;
+        const jpegBlob = Array.isArray(converted) ? converted[0] : converted;
+        // Strip metadata from the converted JPEG via canvas
+        return stripViaCanvas(jpegBlob, 'image/jpeg', 0.95);
       } catch (e) {
-        // heic2any failed — fall through and let canvas try natively (Safari)
+        throw new Error('HEIC conversion failed: ' + e.message);
       }
     }
 
+    // All other formats
+    let outType = 'image/jpeg';
+    let quality = 0.95;
+    if (file.type === 'image/png')  { outType = 'image/png';  quality = undefined; }
+    if (file.type === 'image/webp') { outType = 'image/webp'; quality = 0.95; }
+
+    return stripViaCanvas(file, outType, quality);
+  }
+
+  function stripViaCanvas(blob, outType, quality) {
     return new Promise((resolve, reject) => {
       const img = new Image();
-      const blobUrl = URL.createObjectURL(processFile);
+      const blobUrl = URL.createObjectURL(blob);
 
       img.onload = () => {
         URL.revokeObjectURL(blobUrl);
-
         const canvas = document.createElement('canvas');
         canvas.width  = img.naturalWidth;
         canvas.height = img.naturalHeight;
-
-        const ctx = canvas.getContext('2d');
-        ctx.drawImage(img, 0, 0);
-
-        // PNG → PNG (lossless), WebP → WebP, everything else → JPEG 95%
-        let outType = 'image/jpeg';
-        let quality = 0.95;
-        if (file.type === 'image/png') {
-          outType = 'image/png';
-          quality = undefined;
-        } else if (file.type === 'image/webp') {
-          outType = 'image/webp';
-          quality = 0.95;
-        }
-
-        canvas.toBlob(blob => {
-          if (blob) resolve(blob);
+        canvas.getContext('2d').drawImage(img, 0, 0);
+        canvas.toBlob(result => {
+          if (result) resolve(result);
           else reject(new Error('Canvas toBlob failed'));
         }, outType, quality);
       };
