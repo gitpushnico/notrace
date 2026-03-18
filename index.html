@@ -758,7 +758,7 @@
       <span class="format-chip">BMP</span>
       <span class="format-chip">AVIF</span>
     </div>
-    <p class="heic-note">🍎 HEIC supported in Safari. Chrome/Firefox: export as JPEG from iPhone Photos first</p>
+    <p class="heic-note">🍎 HEIC: export as JPEG from iPhone Photos app before uploading</p>
 
     <input type="file" id="fileInput" accept="image/*" multiple style="position:fixed;top:-9999px;left:-9999px;opacity:0;pointer-events:none;">
   </div>
@@ -1347,7 +1347,7 @@
       const sizeText = sizeTag ? sizeTag.textContent : '';
       tagsEl.innerHTML = `
         <span class="tag tag-size">${sizeText}</span>
-        <span class="tag tag-exif">⚠ HEIC not supported in Chrome/Firefox — open Photos on iPhone, export as JPEG, then retry</span>
+        <span class="tag tag-exif">⚠ HEIC not supported — open Photos on iPhone, export as JPEG, then retry</span>
       `;
     }
   }

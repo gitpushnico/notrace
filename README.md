@@ -64,13 +64,13 @@ This is enforced at multiple levels:
 | JPEG   | ✅    | JPEG (95% quality) |
 | PNG    | ✅    | PNG (lossless) |
 | WebP   | ✅    | WebP (95% quality) |
-| HEIC   | ✅    | JPEG (converted locally via heic2any) |
+| HEIC   | ✅    | JPEG (export as JPEG from iPhone Photos first) |
 | GIF    | ✅    | JPEG |
 | BMP    | ✅    | JPEG |
 | TIFF   | ✅    | JPEG |
 | AVIF   | ✅    | JPEG |
 
-> **Note on HEIC:** Apple has used HEIC as the default photo format since iPhone 7 (iOS 11, 2017). Chrome and Firefox cannot decode HEIC natively — only Safari can decode HEIC without compromise. Chrome/Firefox users should export photos as JPEG from the iPhone Photos app before using NoTrace.
+> **Note on HEIC:** Apple has used HEIC as the default photo format since iPhone 7 (iOS 11, 2017). HEIC is not supported in browsers via Canvas — export your photos as JPEG from the iPhone Photos app before using NoTrace.
 
 ---
 
