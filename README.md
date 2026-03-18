@@ -17,9 +17,11 @@ This is enforced at multiple levels:
 
 3. **Object URL lifecycle** — Every `URL.createObjectURL()` call is revoked within seconds. No image data lingers in memory longer than needed.
 
-4. **No third-party scripts** — Only Google Fonts CSS (no JS). Zero analytics, zero tracking pixels, zero telemetry.
+4. **No third-party scripts** — Google Fonts CSS only (no JS). `heic2any` is self-hosted in the repo. Zero analytics, zero tracking pixels, zero telemetry.
 
 5. **Static hosting only** — There is no backend, no server-side code, no database.
+
+6. **Filenames anonymised** — Output files are renamed to `image_001.jpg`, `image_002.jpg` etc. Android and other devices embed date/time in filenames (e.g. `IMG_20250723_103045.jpg`) which can reveal when a photo was taken even after metadata is stripped.
 
 ---
 
@@ -62,13 +64,13 @@ This is enforced at multiple levels:
 | JPEG   | ✅    | JPEG (95% quality) |
 | PNG    | ✅    | PNG (lossless) |
 | WebP   | ✅    | WebP (95% quality) |
-| HEIC   | ✅    | JPEG (browser limitation) |
+| HEIC   | ✅    | JPEG (converted locally via heic2any) |
 | GIF    | ✅    | JPEG |
 | BMP    | ✅    | JPEG |
 | TIFF   | ✅    | JPEG |
 | AVIF   | ✅    | JPEG |
 
-> **Note on HEIC:** Browsers cannot encode HEIC output, so iPhone photos are saved as JPEG. Image quality is preserved.
+> **Note on HEIC:** Apple has used HEIC as the default photo format since iPhone 7 (iOS 11, 2017). Chrome and Firefox cannot decode HEIC natively — only Safari can. NoTrace uses `heic2any`, a self-hosted WebAssembly library, to convert HEIC → JPEG locally in the browser. No images are sent to any server.
 
 ---
 
@@ -121,9 +123,12 @@ npx serve .
 
 ```
 notrace/
-├── index.html      # Entire app — single file, no dependencies
-├── vercel.json     # Deployment config + security headers
-└── README.md       # This file
+├── index.html        # Entire app — single file
+├── heic2any.min.js   # Self-hosted HEIC converter (no external requests)
+├── vercel.json       # Deployment config + security headers
+├── README.md         # This file
+├── LICENSE           # MIT
+└── .gitignore
 ```
 
 ---

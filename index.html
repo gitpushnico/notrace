@@ -6,10 +6,15 @@
   <meta name="description" content="Strip GPS, device info, and all hidden metadata from photos. 100% local — your images never leave your device.">
   <meta name="theme-color" content="#050505">
 
-  <!-- No external scripts. Fonts only — no JS from Google. -->
+  <!-- Fonts only from Google — no JS. -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Unbounded:wght@400;600;700;900&display=swap" rel="stylesheet">
+
+  <!-- heic2any: converts Apple HEIC photos locally in-browser.
+       Chrome and Firefox cannot decode HEIC natively — only Safari can.
+       Self-hosted — no external requests. No images leave your device. -->
+  <script src="/heic2any.min.js"></script>
 
   <title>NoTrace — Private Metadata Remover</title>
 
@@ -254,6 +259,13 @@
       justify-content: center;
       flex-wrap: wrap;
       margin-top: 22px;
+    }
+
+    .heic-note {
+      font-size: 11px;
+      color: var(--text-dim);
+      margin-top: 14px;
+      letter-spacing: 0.3px;
     }
 
     .format-chip {
@@ -749,6 +761,8 @@
       <span class="format-chip">BMP</span>
       <span class="format-chip">AVIF</span>
     </div>
+    <p class="heic-note">🍎 Apple HEIC photos are converted locally — no server involved</p>
+
     <input type="file" id="fileInput" accept="image/*" multiple style="position:fixed;top:-9999px;left:-9999px;opacity:0;pointer-events:none;">
   </div>
 
@@ -1217,13 +1231,30 @@
   // 1. Decode image pixels into canvas
   // 2. Re-encode — canvas only copies pixel data, NEVER metadata
   // 3. Result Blob has zero EXIF/XMP/IPTC fields
-  function stripMetadata(file) {
+  // ── Core: strip metadata via Canvas ───────────────────────────────
+  // HEIC note: Chrome and Firefox cannot decode HEIC natively — only Safari can.
+  // Apple has used HEIC as the default photo format since iPhone 7 (iOS 11, 2017).
+  // We use heic2any to convert HEIC → JPEG locally in-browser before canvas processing.
+  // heic2any runs entirely client-side via WebAssembly. No images leave your device.
+  async function stripMetadata(file) {
+    let processFile = file;
+    const isHeic = /\.(heic|heif)$/i.test(file.name) || file.type === 'image/heic' || file.type === 'image/heif';
+
+    if (isHeic && typeof heic2any !== 'undefined') {
+      try {
+        const converted = await heic2any({ blob: file, toType: 'image/jpeg', quality: 0.95 });
+        processFile = Array.isArray(converted) ? converted[0] : converted;
+      } catch (e) {
+        // heic2any failed — fall through and let canvas try natively (Safari)
+      }
+    }
+
     return new Promise((resolve, reject) => {
       const img = new Image();
-      const blobUrl = URL.createObjectURL(file);
+      const blobUrl = URL.createObjectURL(processFile);
 
       img.onload = () => {
-        URL.revokeObjectURL(blobUrl); // revoke immediately on load
+        URL.revokeObjectURL(blobUrl);
 
         const canvas = document.createElement('canvas');
         canvas.width  = img.naturalWidth;
@@ -1232,10 +1263,7 @@
         const ctx = canvas.getContext('2d');
         ctx.drawImage(img, 0, 0);
 
-        // Determine output type
-        // HEIC → JPEG (browser can't encode HEIC)
-        // PNG  → PNG (lossless)
-        // else → JPEG at 95% quality
+        // PNG → PNG (lossless), WebP → WebP, everything else → JPEG 95%
         let outType = 'image/jpeg';
         let quality = 0.95;
         if (file.type === 'image/png') {
